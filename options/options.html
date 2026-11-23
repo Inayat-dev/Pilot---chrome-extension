@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Pilot — Settings</title>
+<link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M6 3.5L19 9.8 13 12l-2.2 6L6 3.5Z" fill="currentColor"/>
+        </svg>
+        Pilot Settings
+      </div>
+      <p class="sub">Keys are stored locally in this browser profile only — nothing is sent anywhere except straight to each provider's own API when you run the agent.</p>
+    </header>
+
+    <section class="block">
+      <h2 class="block-title">Run behavior</h2>
+      <div class="card">
+        <div class="row">
+          <div class="row-text">
+            <span class="row-label">Confirm every step</span>
+            <span class="row-hint">Pilot pauses and shows you each click, type, or navigation before it happens.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="approvalCheckbox" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <span class="row-label">Theme</span>
+            <span class="row-hint">Applies to the side panel and this settings page.</span>
+          </div>
+          <div class="segmented" id="themeSegmented">
+            <button class="segment" data-theme="dark">Dark</button>
+            <button class="segment" data-theme="light">Light</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <span class="row-label">Max steps per run</span>
+            <span class="row-hint">Stops the agent automatically if a task runs long — a safety ceiling.</span>
+          </div>
+          <input type="number" id="maxStepsInput" class="num-input" min="1" max="50" />
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <span class="row-label">Pause between actions</span>
+            <span class="row-hint">Milliseconds to wait after each action, so slow-loading pages catch up.</span>
+          </div>
+          <input type="number" id="stepDelayInput" class="num-input" min="0" max="5000" step="50" />
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <span class="row-label">Fast mode</span>
+            <span class="row-hint">Shorter network timeout + a smaller reply budget per step — snappier, best for simple pages. Complex forms may occasionally need an extra step.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="fastModeCheckbox" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <span class="row-label">Request timeout</span>
+            <span class="row-hint">Give up on a slow reply and try the next key (or fail cleanly) after this many seconds.</span>
+          </div>
+          <input type="number" id="requestTimeoutInput" class="num-input" min="5" max="60" step="1" />
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Safety</h2>
+      <div class="card">
+        <p class="card-note">
+          Pilot always refuses to act on banking/financial, crypto-exchange,
+          adult-content, and piracy sites — the same "hard block" approach
+          browser agents like Claude in Chrome and Comet use, since those are
+          the sites most worth protecting from a hidden prompt-injection
+          instruction on the page. This built-in list isn't editable here.
+        </p>
+        <label class="field">
+          <span>Your own blocked sites (one domain per line, optional)</span>
+          <textarea id="blockedSitesInput" class="blocked-sites-input" rows="4" placeholder="example.com&#10;internal.mycompany.com" spellcheck="false"></textarea>
+        </label>
+        <div class="card-actions">
+          <button class="btn btn-primary" id="blockedSitesSaveBtn">Save</button>
+        </div>
+        <p class="status-line" id="blockedSitesStatus" hidden></p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Providers</h2>
+      <section id="providerList" class="provider-list"></section>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Backup</h2>
+      <div class="card">
+        <p class="card-note">Export every provider, key, and preference as a JSON file — handy before reinstalling, or to move your setup to another browser profile. The file isn't encrypted, so keep it somewhere private.</p>
+        <div class="card-actions">
+          <button class="btn btn-ghost" id="exportBtn">Export settings</button>
+          <button class="btn btn-ghost" id="importBtn">Import settings</button>
+          <input type="file" id="importFileInput" accept="application/json" hidden />
+        </div>
+        <p class="status-line" id="backupStatus" hidden></p>
+      </div>
+    </section>
+  </div>
+
+  <template id="cloudCardTpl">
+    <div class="card">
+      <div class="card-head">
+        <span class="dot"></span>
+        <span class="card-title"></span>
+        <a class="docs-link" target="_blank" rel="noopener">docs</a>
+      </div>
+
+      <div class="key-list"></div>
+
+      <div class="key-add-row">
+        <input type="password" class="newKeyInput" placeholder="Paste another API key" autocomplete="off" spellcheck="false" />
+        <input type="text" class="newKeyLabelInput" placeholder="Label (optional)" autocomplete="off" spellcheck="false" />
+        <button class="btn btn-ghost addKeyBtn">Add key</button>
+      </div>
+      <p class="key-hint">Add more than one key and Pilot automatically switches to the next when one hits a rate limit or runs out of free-tier quota — no manual swapping mid-task.</p>
+
+      <label class="field">
+        <span>Model</span>
+        <input type="text" class="modelInput" autocomplete="off" spellcheck="false" />
+      </label>
+      <div class="card-actions">
+        <button class="btn btn-ghost testAllBtn">Test all keys</button>
+        <button class="btn btn-ghost resetKeysBtn">Reset key status</button>
+        <button class="btn btn-ghost useBtn">Use this provider</button>
+        <button class="btn btn-primary saveBtn">Save</button>
+      </div>
+      <p class="status-line" hidden></p>
+    </div>
+  </template>
+
+  <template id="ollamaCardTpl">
+    <div class="card">
+      <div class="card-head">
+        <span class="dot"></span>
+        <span class="card-title">Ollama (local)</span>
+        <a class="docs-link" href="https://ollama.com" target="_blank" rel="noopener">docs</a>
+      </div>
+      <p class="card-note">Runs fully on this device via <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>. No key, no per-token cost, nothing leaves your machine. Requires Ollama running locally (<code>ollama serve</code>).</p>
+      <label class="field">
+        <span>Server URL</span>
+        <input type="text" class="baseUrlInput" placeholder="http://localhost:11434" autocomplete="off" spellcheck="false" />
+      </label>
+      <label class="field">
+        <span>Model</span>
+        <select class="modelSelect"></select>
+      </label>
+      <div class="card-actions">
+        <button class="btn btn-ghost testBtn">Test connection</button>
+        <button class="btn btn-ghost useBtn">Use this provider</button>
+        <button class="btn btn-primary saveBtn">Save</button>
+      </div>
+      <p class="status-line" hidden></p>
+      <details class="setup-help">
+        <summary>Model too slow, or answers are unreliable?</summary>
+        <p>Smaller models (1–3B params) respond fastest but can be less precise at reading pages — try:</p>
+        <code>ollama pull qwen2.5:1.5b</code>
+        <p>For better reliability on a capable machine:</p>
+        <code>ollama pull llama3.1:8b</code>
+        <p>If CORS errors show up in the test above, start Ollama with extension access allowed:</p>
+        <code>OLLAMA_ORIGINS=chrome-extension://* ollama serve</code>
+      </details>
+    </div>
+  </template>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>
