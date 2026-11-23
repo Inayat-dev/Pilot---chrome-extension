@@ -4,7 +4,7 @@
 
 **PDF/Excel exports for a "get me X" task are now just X — not a run
 report about X.** When the goal was e.g. "get all contact us info of
-bigmommy.site and save in pdf," the PDF still opened with "Pilot run
+github.com and save in pdf," the PDF still opened with "Pilot run
 report," a restated Goal section, a Result section, and (further down) the
 full click-by-click step transcript — several paragraphs of report
 scaffolding around the two lines of actual contact info. When a run
